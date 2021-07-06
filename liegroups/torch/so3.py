@@ -132,7 +132,7 @@ class SO3Matrix(_base.SOMatrixBase):
         small_angle_inds = small_angle_mask.nonzero(as_tuple=False).squeeze_(dim=1)
         if len(small_angle_inds) > 0:
             jac[small_angle_inds] = \
-                torch.eye(cls.dof, dtype=phi.dtype, device=phi.dtype).expand_as(jac[small_angle_inds]) - \
+                torch.eye(cls.dof, dtype=phi.dtype, device=phi.device).expand_as(jac[small_angle_inds]) - \
                 0.5 * cls.wedge(phi[small_angle_inds])
 
         # Otherwise...
@@ -147,16 +147,16 @@ class SO3Matrix(_base.SOMatrixBase):
             ha = 0.5 * angle       # half angle
             hacha = ha / ha.tan()  # half angle * cot(half angle)
 
-            ha.unsqueeze_(dim=1).unsqueeze_(
+            ha_expand = ha.unsqueeze(dim=1).unsqueeze(
                 dim=2).expand_as(jac[large_angle_inds])
-            hacha.unsqueeze_(dim=1).unsqueeze_(
+            hacha_expand = hacha.unsqueeze(dim=1).unsqueeze(
                 dim=2).expand_as(jac[large_angle_inds])
 
-            A = hacha * \
+            A = hacha_expand * \
                 torch.eye(cls.dof, dtype=phi.dtype, device=phi.device).unsqueeze_(
                     dim=0).expand_as(jac[large_angle_inds])
-            B = (1. - hacha) * utils.outer(axis, axis)
-            C = -ha * cls.wedge(axis)
+            B = (1. - hacha_expand) * utils.outer(axis, axis)
+            C = -ha_expand * cls.wedge(axis)
 
             jac[large_angle_inds] = A + B + C
 
