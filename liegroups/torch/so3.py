@@ -219,10 +219,9 @@ class SO3Matrix(_base.SOMatrixBase):
         # The cosine of the rotation angle is related to the utils.trace of C
         # Clamp to its proper domain to avoid NaNs from rounding errors
         cos_angle = (0.5 * utils.trace(mat) - 0.5).clamp_(-1., 1.)
-        angle = cos_angle.acos()
 
         # Near phi==0, use first order Taylor expansion
-        small_angle_mask = utils.isclose(angle, 0.)
+        small_angle_mask = utils.isclose(cos_angle, 1.)
         small_angle_inds = small_angle_mask.nonzero(as_tuple=False).squeeze_(dim=1)
 
         if len(small_angle_inds) > 0:
@@ -235,7 +234,7 @@ class SO3Matrix(_base.SOMatrixBase):
         large_angle_inds = large_angle_mask.nonzero(as_tuple=False).squeeze_(dim=1)
 
         if len(large_angle_inds) > 0:
-            angle = angle[large_angle_inds]
+            angle = cos_angle[large_angle_inds].acos()
             sin_angle = angle.sin()
             phi[large_angle_inds, :] = \
                 self.vee(
